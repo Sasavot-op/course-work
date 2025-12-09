@@ -1,16 +1,16 @@
 CC=gcc
 CFLAGS=-Wall -g
-TARGET=main.o
+TARGET=main
 
 all: $(TARGET)
 
-$(TARGET): main.c functions.c structure.h
-	$(CC) $(CFLAGS) main.c functions.c -o $(TARGET)
+$(TARGET): main.c functions.c util.c
+	$(CC) $(CFLAGS) main.c functions.c util.c -o $(TARGET)
 
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f *.o $(TARGET) cars.txt
+	rm -f $(TARGET) cars.db
 
-rebuild: clean all run
+rebuild: clean all

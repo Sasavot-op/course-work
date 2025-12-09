@@ -1,168 +1,360 @@
 #include "structure.h"
+#include "util.h"
+#include <ctype.h>
 
-Car* cars = NULL;
+Car *cars = NULL;
 int car_count = 0;
 int next_id = 1;
 
-char* readLine() {
-    char buffer[1024];
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = 0;
-    return strdup(buffer);
+char *readLine(void){
+    size_t cap = 64;
+    size_t len = 0;
+    char *buf = malloc(cap);
+    if(!buf) return NULL;
+    int c;
+    while((c = getchar()) != '\n' && c != EOF){
+        if(len+1 >= cap){
+            cap *= 2;
+            char *tmp = realloc(buf, cap);
+            if(!tmp){ free(buf); return NULL; }
+            buf = tmp;
+        }
+        buf[len++] = (char)c;
+    }
+    buf[len] = '\0';
+    char *res = my_strdup(buf);
+    free(buf);
+    return res;
 }
 
-int chooseOption(const char* prompt, char* options[], int n) {
-    int choice = 0;
-    printf("%s\n", prompt);
-    for(int i=0;i<n;i++)
-        printf("%d - %s\n", i+1, options[i]);
-    printf("Your choice: ");
-    scanf("%d",&choice);
+void freeCar(Car *c){
+    if(!c) return;
+    free(c->brand); free(c->model); free(c->color); free(c->technical_inspection);
+    free(c->body_type); free(c->mileage); free(c->gear_box); free(c->fuel_type); free(c->owner);
+}
+
+void printCar(const Car *c){
+    if(!c) return;
+    printf("ID: %d\nBrand: %s\nModel: %s\nYear: %d\nPrice: %d\nSeats: %d\nColor: %s\nTechnical Inspection: %s\nBody Type: %s\nMileage: %s\nGear Box: %s\nFuel Type: %s\nOwner: %s\n\n",
+        c->id,
+        c->brand?c->brand:"(none)",
+        c->model?c->model:"(none)",
+        c->year,
+        c->price,
+        c->seats,
+        c->color?c->color:"(none)",
+        c->technical_inspection?c->technical_inspection:"(none)",
+        c->body_type?c->body_type:"(none)",
+        c->mileage?c->mileage:"(none)",
+        c->gear_box?c->gear_box:"(none)",
+        c->fuel_type?c->fuel_type:"(none)",
+        c->owner?c->owner:"(none)"
+    );
+}
+
+void printCarShort(const Car *c){
+    if(!c) return;
+    printf("%d: %s %s (%d) - %d$\n", c->id, c->brand?c->brand:"", c->model?c->model:"", c->year, c->price);
+}
+
+void addCarInteractive(void){
+    Car newc;
+    newc.id = next_id++;
+    printf("Add new car (press enter for empty fields)\n");
+    printf("Brand: "); newc.brand = readLine();
+    printf("Model: "); newc.model = readLine();
+
+    printf("Year (int): ");
+    if(scanf("%d",&newc.year)!=1) newc.year = 0;
     while(getchar()!='\n');
-    if(choice<1 || choice>n) return chooseOption(prompt, options, n);
-    return choice;
-}
 
-void addCar() {
-    cars = realloc(cars, sizeof(Car)*(car_count+1));
-    Car* c = &cars[car_count];
+    printf("Price (int): ");
+    if(scanf("%d",&newc.price)!=1) newc.price = 0;
+    while(getchar()!='\n');
 
-    char* brands[] = {"BMW","Audi","Toyota"};
-    int brand_choice = chooseOption("Choose brand:", brands, 3);
-    strcpy(c->brand, brands[brand_choice-1]);
+    printf("Seats (int): ");
+    if(scanf("%d",&newc.seats)!=1) newc.seats = 0;
+    while(getchar()!='\n');
 
-    char* bmw_models[] = {"X5","X6","M3"};
-    char* audi_models[] = {"A4","Q7","A6"};
-    char* toyota_models[] = {"Camry","RAV4","Corolla"};
+    printf("Color: "); newc.color = readLine();
+    printf("Technical Inspection: "); newc.technical_inspection = readLine();
+    printf("Body Type: "); newc.body_type = readLine();
+    printf("Mileage: "); newc.mileage = readLine();
+    printf("Gear Box: "); newc.gear_box = readLine();
+    printf("Fuel Type: "); newc.fuel_type = readLine();
+    printf("Owner: "); newc.owner = readLine();
 
-    if(strcmp(c->brand,"BMW")==0){
-        int model_choice = chooseOption("Choose model:", bmw_models,3);
-        strcpy(c->model,bmw_models[model_choice-1]);
-    } else if(strcmp(c->brand,"Audi")==0){
-        int model_choice = chooseOption("Choose model:", audi_models,3);
-        strcpy(c->model,audi_models[model_choice-1]);
-    } else {
-        int model_choice = chooseOption("Choose model:", toyota_models,3);
-        strcpy(c->model,toyota_models[model_choice-1]);
+    Car *tmp = realloc(cars, sizeof(Car)*(car_count+1));
+    if(!tmp){
+        printf("Memory error\n");
+        freeCar(&newc);
+        return;
     }
-
-    printf("Year: "); scanf("%d",&c->year); while(getchar()!='\n');
-    printf("Price: "); scanf("%d",&c->price); while(getchar()!='\n');
-    printf("Seats: "); scanf("%d",&c->seats); while(getchar()!='\n');
-    printf("Color: "); strcpy(c->color, readLine());
-    printf("Technical Inspection: "); strcpy(c->technical_inspection, readLine());
-
-    char* body_types[] = {"Sedan","SUV","Coupe"};
-    int bt = chooseOption("Choose body type:", body_types,3);
-    strcpy(c->body_type, body_types[bt-1]);
-
-    printf("Mileage: "); strcpy(c->mileage, readLine());
-
-    char* gear_boxes[] = {"Auto","Manual"};
-    int gb = chooseOption("Choose gear box:", gear_boxes,2);
-    strcpy(c->gear_box, gear_boxes[gb-1]);
-
-    char* fuels[] = {"Petrol","Diesel"};
-    int f = chooseOption("Choose fuel type:", fuels,2);
-    strcpy(c->fuel_type, fuels[f-1]);
-
-    printf("Owner: "); strcpy(c->owner, readLine());
-
-    c->id = next_id++;
+    cars = tmp;
+    cars[car_count] = newc;
     car_count++;
+    printf("Added car with ID %d\n", newc.id);
 }
 
-void deleteCar() {
-    if(car_count==0){ printf("No cars!\n"); return; }
+void deleteCarById(void){
+    if(car_count==0){ printf("No cars available\n"); return; }
     printf("Enter car ID to delete: ");
-    int id; scanf("%d",&id); while(getchar()!='\n');
-    int found=0;
-    for(int i=0;i<car_count;i++){
-        if(cars[i].id==id){
-            for(int j=i;j<car_count-1;j++)
-                cars[j]=cars[j+1];
-            car_count--;
-            cars = realloc(cars,sizeof(Car)*car_count);
-            found=1;
-            printf("Car deleted!\n");
-            break;
-        }
+    int id;
+    if(scanf("%d",&id)!=1){ while(getchar()!='\n'); printf("Invalid input\n"); return; }
+    while(getchar()!='\n');
+    int idx = -1;
+    for(int i=0;i<car_count;i++) if(cars[i].id == id){ idx = i; break; }
+    if(idx==-1){ printf("ID not found\n"); return; }
+    freeCar(&cars[idx]);
+    for(int j=idx;j<car_count-1;j++) cars[j]=cars[j+1];
+    car_count--;
+    if(car_count==0){ free(cars); cars = NULL; }
+    else {
+        Car *tmp = realloc(cars, sizeof(Car)*car_count);
+        if(tmp) cars = tmp;
     }
-    if(!found) printf("ID not found!\n");
+    printf("Deleted car %d\n", id);
 }
 
-int comparePrice(const void* a,const void* b){
-    Car* c1=(Car*)a;
-    Car* c2=(Car*)b;
-    return c1->price-c2->price;
+static int cmp_price(const void *a, const void *b){
+    const Car *x = a; const Car *y = b;
+    return x->price - y->price;
+}
+static int cmp_year(const void *a, const void *b){
+    const Car *x = a; const Car *y = b;
+    return x->year - y->year;
+}
+static int cmp_id(const void *a, const void *b){
+    const Car *x = a; const Car *y = b;
+    return x->id - y->id;
 }
 
-void showCars(){
+void sortCarsByPrice(void){ qsort(cars, car_count, sizeof(Car), cmp_price); printf("Sorted by price.\n"); }
+void sortCarsByYear(void){ qsort(cars, car_count, sizeof(Car), cmp_year); printf("Sorted by year.\n"); }
+void sortCarsById(void){ qsort(cars, car_count, sizeof(Car), cmp_id); printf("Sorted by id.\n"); }
+
+void showAllCars(void){
     if(car_count==0){ printf("No cars!\n"); return; }
-    qsort(cars, car_count, sizeof(Car), comparePrice);
-
-    char printed_brands[MAX_BRANDS][50]; int brand_count=0;
+    printf("Choose sorting: 1-price 2-year 3-id (default 3): ");
+    int s=3;
+    if(scanf("%d",&s)!=1) s=3;
+    while(getchar()!='\n');
+    if(s==1) sortCarsByPrice();
+    else if(s==2) sortCarsByYear();
+    else sortCarsById();
 
     for(int i=0;i<car_count;i++){
-        int brand_index=-1;
-        for(int j=0;j<brand_count;j++)
-            if(strcmp(printed_brands[j],cars[i].brand)==0){ brand_index=j; break; }
-        if(brand_index==-1){
-            strcpy(printed_brands[brand_count],cars[i].brand);
-            brand_index=brand_count++;
-            printf("=== %s ===\n\n", cars[i].brand);
-        }
-
-        int model_already=0;
-        for(int k=0;k<i;k++)
-            if(strcmp(cars[k].brand,cars[i].brand)==0 && strcmp(cars[k].model,cars[i].model)==0) model_already=1;
-
-        if(!model_already){
-            printf("--- Model: %s ---\n", cars[i].model);
-            for(int m=0;m<car_count;m++){
-                if(strcmp(cars[m].brand,cars[i].brand)==0 && strcmp(cars[m].model,cars[i].model)==0){
-                    printf("%d#car\nYear: %d\nPrice: %d$\nSeats: %d\nColor: %s\nTechnical Inspection: %s\nBody Type: %s\nMileage: %s\nGear Box: %s\nFuel Type: %s\nOwner: %s\n\n",
-                    cars[m].id,cars[m].year,cars[m].price,cars[m].seats,cars[m].color,cars[m].technical_inspection,
-                    cars[m].body_type,cars[m].mileage,cars[m].gear_box,cars[m].fuel_type,cars[m].owner);
-                }
-            }
-        }
+        printCarShort(&cars[i]);
     }
+
+    printf("Show details for ID (or 0 to skip): ");
+    int id;
+    if(scanf("%d",&id)==1 && id!=0){
+        while(getchar()!='\n');
+        for(int i=0;i<car_count;i++) if(cars[i].id==id){ printCar(&cars[i]); return; }
+        printf("ID not found\n");
+    } else { while(getchar()!='\n'); }
 }
 
-void saveToFile(){
-    FILE* f=fopen("cars.txt","w");
-    if(!f){ printf("Cannot open file!\n"); return; }
-    qsort(cars, car_count, sizeof(Car), comparePrice);
 
-    char printed_brands[MAX_BRANDS][50]; int brand_count=0;
-
+void saveToFile(const char *filename){
+    FILE *f = fopen(filename, "w");
+    if(!f){ printf("Cannot open file for writing: %s\n", filename); return; }
+    fprintf(f, "%d\n", car_count);
     for(int i=0;i<car_count;i++){
-        int brand_index=-1;
-        for(int j=0;j<brand_count;j++)
-            if(strcmp(printed_brands[j],cars[i].brand)==0){ brand_index=j; break; }
-        if(brand_index==-1){
-            strcpy(printed_brands[brand_count],cars[i].brand);
-            brand_index=brand_count++;
-            fprintf(f,"=== %s ===\n\n", cars[i].brand);
-        }
+        Car *c = &cars[i];
+        fprintf(f, "%d\n", c->id);
+        fprintf(f, "%s\n", c->brand?c->brand:"");
+        fprintf(f, "%s\n", c->model?c->model:"");
+        fprintf(f, "%d\n", c->year);
+        fprintf(f, "%d\n", c->price);
+        fprintf(f, "%d\n", c->seats);
+        fprintf(f, "%s\n", c->color?c->color:"");
+        fprintf(f, "%s\n", c->technical_inspection?c->technical_inspection:"");
+        fprintf(f, "%s\n", c->body_type?c->body_type:"");
+        fprintf(f, "%s\n", c->mileage?c->mileage:"");
+        fprintf(f, "%s\n", c->gear_box?c->gear_box:"");
+        fprintf(f, "%s\n", c->fuel_type?c->fuel_type:"");
+        fprintf(f, "%s\n", c->owner?c->owner:"");
+    }
+    fclose(f);
+    printf("Saved %d cars to %s\n", car_count, filename);
+}
 
-        int model_already=0;
-        for(int k=0;k<i;k++)
-            if(strcmp(cars[k].brand,cars[i].brand)==0 && strcmp(cars[k].model,cars[i].model)==0) model_already=1;
+int loadFromFile(const char *filename){
+    FILE *f = fopen(filename, "r");
+    if(!f) return 0;
+    int count = 0;
+    if(fscanf(f, "%d\n", &count)!=1){ fclose(f); return 0; }
+    for(int i=0;i<car_count;i++) freeCar(&cars[i]);
+    free(cars); cars=NULL; car_count=0; next_id=1;
 
-        if(!model_already){
-            fprintf(f,"--- Model: %s ---\n", cars[i].model);
-            for(int m=0;m<car_count;m++){
-                if(strcmp(cars[m].brand,cars[i].brand)==0 && strcmp(cars[m].model,cars[i].model)==0){
-                    fprintf(f,"%d#car\nYear: %d\nPrice: %d$\nSeats: %d\nColor: %s\nTechnical Inspection: %s\nBody Type: %s\nMileage: %s\nGear Box: %s\nFuel Type: %s\nOwner: %s\n\n",
-                    cars[m].id,cars[m].year,cars[m].price,cars[m].seats,cars[m].color,cars[m].technical_inspection,
-                    cars[m].body_type,cars[m].mileage,cars[m].gear_box,cars[m].fuel_type,cars[m].owner);
-                }
-            }
+    for(int i=0;i<count;i++){
+        Car tmp;
+        char *line = NULL;
+        size_t bufcap = 0;
+        int res;
+        /* id */
+        if(fscanf(f, "%d\n", &tmp.id)!=1) { /* corrupt */ break; }
+        if(tmp.id >= next_id) next_id = tmp.id + 1;
+        char buf[1024];
+        if(!fgets(buf, sizeof(buf), f)) break;
+        size_t ln = my_strlen(buf);
+        if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0;
+        tmp.brand = my_strdup(buf);
+
+        if(!fgets(buf, sizeof(buf), f)) break;
+        ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0;
+        tmp.model = my_strdup(buf);
+
+        if(fscanf(f, "%d\n", &tmp.year)!=1) tmp.year=0;
+        if(fscanf(f, "%d\n", &tmp.price)!=1) tmp.price=0;
+        if(fscanf(f, "%d\n", &tmp.seats)!=1) tmp.seats=0;
+
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.color = my_strdup(buf);
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.technical_inspection = my_strdup(buf);
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.body_type = my_strdup(buf);
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.mileage = my_strdup(buf);
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.gear_box = my_strdup(buf);
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.fuel_type = my_strdup(buf);
+        if(!fgets(buf, sizeof(buf), f)) break; ln = my_strlen(buf); if(ln>0 && buf[ln-1]=='\n') buf[ln-1]=0; tmp.owner = my_strdup(buf);
+
+        Car *t = realloc(cars, sizeof(Car)*(car_count+1));
+        if(!t){ freeCar(&tmp); break; }
+        cars = t;
+        cars[car_count] = tmp;
+        car_count++;
+    }
+    fclose(f);
+    printf("Loaded %d cars from %s\n", car_count, filename);
+    return 1;
+}
+
+void generateTestData(int n){
+    const char *brands[] = {"BMW","Audi","Toyota","Ford","Tesla","Opel","Skoda"};
+    const char *models[] = {"X1","X3","A4","Q7","Camry","Model S","Octavia","Focus","Corolla"};
+    const char *cols[] = {"Red","Blue","White","Black","Silver"};
+    const char *bodies[] = {"Sedan","SUV","Coupe","Hatchback"};
+    const char *gear[] = {"Auto","Manual"};
+    const char *fuel[] = {"Petrol","Diesel","Electric"};
+    const char *owners[] = {"Alice","Bob","Carol","Dave","Eve"};
+
+    for(int i=0;i<n;i++){
+        Car tmp;
+        tmp.id = next_id++;
+        tmp.brand = my_strdup(brands[i % (sizeof(brands)/sizeof(brands[0]))]);
+        tmp.model = my_strdup(models[i % (sizeof(models)/sizeof(models[0]))]);
+        tmp.year = 2000 + (i % 25);
+        tmp.price = 5000 + (i * 1500);
+        tmp.seats = 4 + (i % 3);
+        tmp.color = my_strdup(cols[i % (sizeof(cols)/sizeof(cols[0]))]);
+        tmp.technical_inspection = my_strdup("OK");
+        tmp.body_type = my_strdup(bodies[i % (sizeof(bodies)/sizeof(bodies[0]))]);
+        tmp.mileage = my_strdup("100000");
+        tmp.gear_box = my_strdup(gear[i % (sizeof(gear)/sizeof(gear[0]))]);
+        tmp.fuel_type = my_strdup(fuel[i % (sizeof(fuel)/sizeof(fuel[0]))]);
+        tmp.owner = my_strdup(owners[i % (sizeof(owners)/sizeof(owners[0]))]);
+
+        Car *t = realloc(cars, sizeof(Car)*(car_count+1));
+        if(!t){ freeCar(&tmp); break; }
+        cars = t;
+        cars[car_count++] = tmp;
+    }
+    printf("Generated %d test cars\n", n);
+}
+
+
+static Car cloneCar(const Car *src){
+    Car c;
+    c.id = src->id;
+    c.brand = my_strdup(src->brand?src->brand:"");
+    c.model = my_strdup(src->model?src->model:"");
+    c.year = src->year;
+    c.price = src->price;
+    c.seats = src->seats;
+    c.color = my_strdup(src->color?src->color:"");
+    c.technical_inspection = my_strdup(src->technical_inspection?src->technical_inspection:"");
+    c.body_type = my_strdup(src->body_type?src->body_type:"");
+    c.mileage = my_strdup(src->mileage?src->mileage:"");
+    c.gear_box = my_strdup(src->gear_box?src->gear_box:"");
+    c.fuel_type = my_strdup(src->fuel_type?src->fuel_type:"");
+    c.owner = my_strdup(src->owner?src->owner:"");
+    return c;
+}
+
+Car *filterByBrand(const char *brand, int *out_count){
+    Car *res = NULL; int rc = 0;
+    for(int i=0;i<car_count;i++){
+        if(brand==NULL || brand[0]=='\0' || my_strcmp(cars[i].brand, brand)==0){
+            Car c = cloneCar(&cars[i]);
+            Car *t = realloc(res, sizeof(Car)*(rc+1));
+            if(!t){ freeCar(&c); break; }
+            res = t; res[rc++] = c;
         }
     }
+    *out_count = rc;
+    return res;
+}
 
+Car *filterByModel(const char *model, int *out_count){
+    Car *res = NULL; int rc = 0;
+    for(int i=0;i<car_count;i++){
+        if(model==NULL || model[0]=='\0' || my_strcmp(cars[i].model, model)==0){
+            Car c = cloneCar(&cars[i]);
+            Car *t = realloc(res, sizeof(Car)*(rc+1));
+            if(!t){ freeCar(&c); break; }
+            res = t; res[rc++] = c;
+        }
+    }
+    *out_count = rc;
+    return res;
+}
+
+Car *filterByPriceRange(int minp, int maxp, int *out_count){
+    Car *res = NULL; int rc = 0;
+    for(int i=0;i<car_count;i++){
+        if((minp<=cars[i].price) && (cars[i].price<=maxp)){
+            Car c = cloneCar(&cars[i]);
+            Car *t = realloc(res, sizeof(Car)*(rc+1));
+            if(!t){ freeCar(&c); break; }
+            res = t; res[rc++] = c;
+        }
+    }
+    *out_count = rc;
+    return res;
+}
+
+Car *filterByYearRange(int miny, int maxy, int *out_count){
+    Car *res = NULL; int rc = 0;
+    for(int i=0;i<car_count;i++){
+        if((miny<=cars[i].year) && (cars[i].year<=maxy)){
+            Car c = cloneCar(&cars[i]);
+            Car *t = realloc(res, sizeof(Car)*(rc+1));
+            if(!t){ freeCar(&c); break; }
+            res = t; res[rc++] = c;
+        }
+    }
+    *out_count = rc;
+    return res;
+}
+
+void mapToFile(const Car *list, int list_count, const char *filename){
+    if(!filename){
+        for(int i=0;i<list_count;i++) printCar(&list[i]);
+        return;
+    }
+    FILE *f = fopen(filename, "w");
+    if(!f){ printf("Cannot open %s for writing\n", filename); return; }
+    for(int i=0;i<list_count;i++){
+        const Car *c = &list[i];
+        fprintf(f, "ID:%d\t%s\t%s\t%d\t%d\t%s\n", c->id, c->brand?c->brand:"", c->model?c->model:"", c->year, c->price, c->owner?c->owner:"");
+    }
     fclose(f);
-    printf("Saved %d cars to cars.txt\n", car_count);
+    printf("Mapped %d records to %s\n", list_count, filename);
+}
+
+void freeCarArray(Car *arr, int n){
+    if(!arr) return;
+    for(int i=0;i<n;i++) freeCar(&arr[i]);
+    free(arr);
 }

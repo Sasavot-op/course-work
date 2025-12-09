@@ -1,33 +1,45 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-#define MAX_BRANDS 10
-#define MAX_MODELS 10
 
 typedef struct {
-    char brand[50];
-    char model[50];
+    int id;
+    char *brand;
+    char *model;
     int year;
     int price;
     int seats;
-    char color[100];
-    char technical_inspection[20];
-    char body_type[20];
-    char mileage[50];
-    char gear_box[20];
-    char fuel_type[20];
-    char owner[50];
-    int id;
+    char *color;
+    char *technical_inspection;
+    char *body_type;
+    char *mileage;
+    char *gear_box;
+    char *fuel_type;
+    char *owner;
 } Car;
 
-extern Car* cars;
+extern Car *cars;
 extern int car_count;
 extern int next_id;
 
-char* readLine();
-int chooseOption(const char* prompt, char* options[], int n);
-void addCar();
-void deleteCar();
-void showCars();
+char *readLine(void);
+void freeCar(Car *c);
+void printCar(const Car *c);
+void printCarShort(const Car *c);
+
+void addCarInteractive(void);
+void deleteCarById(void);
+void showAllCars(void);
 void saveToFile();
+int loadFromFile(const char *filename);
+void generateTestData(int n);
+
+void sortCarsByPrice(void);
+void sortCarsByYear(void);
+void sortCarsById(void);
+Car *filterByBrand(const char *brand, int *out_count);
+Car *filterByModel(const char *model, int *out_count);
+Car *filterByPriceRange(int minp, int maxp, int *out_count);
+Car *filterByYearRange(int miny, int maxy, int *out_count);
+void mapToFile(const Car *list, int list_count, const char *filename);
+
+void printHelp(const char *progname);
