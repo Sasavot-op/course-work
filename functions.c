@@ -273,26 +273,32 @@ void saveToFile(const char *filename){
         return;
     }
 
-    fprintf(f, "%d\n", car_count);
+    fprintf(f, "=== АВТОСАЛОН: СПИСОК МАШИН ===\n");
+    fprintf(f, "Всего машин: %d\n\n", car_count);
+
     for(int i = 0; i < car_count; i++){
         Car *c = &cars[i];
-        fprintf(f, "%d\n", c->id);
-        fprintf(f, "%s\n", c->brand ? c->brand : "");
-        fprintf(f, "%s\n", c->model ? c->model : "");
-        fprintf(f, "%d\n", c->year);
-        fprintf(f, "%d\n", c->price);
-        fprintf(f, "%d\n", c->seats);
-        fprintf(f, "%s\n", c->color ? c->color : "");
-        fprintf(f, "%s\n", c->technical_inspection ? c->technical_inspection : "");
-        fprintf(f, "%s\n", c->body_type ? c->body_type : "");
-        fprintf(f, "%s\n", c->mileage ? c->mileage : "");
-        fprintf(f, "%s\n", c->gear_box ? c->gear_box : "");
-        fprintf(f, "%s\n", c->fuel_type ? c->fuel_type : "");
-        fprintf(f, "%s\n", c->owner ? c->owner : "");
+        fprintf(f, "========================================\n");
+        fprintf(f, "Машина #%d\n", i + 1);
+        fprintf(f, "----------------------------------------\n");
+        fprintf(f, "ID                    : %d\n", c->id);
+        fprintf(f, "Марка                 : %s\n", c->brand ? c->brand : "(не указано)");
+        fprintf(f, "Модель                : %s\n", c->model ? c->model : "(не указано)");
+        fprintf(f, "Год выпуска           : %d\n", c->year);
+        fprintf(f, "Цена                  : %d $\n", c->price);
+        fprintf(f, "Количество мест       : %d\n", c->seats);
+        fprintf(f, "Цвет                  : %s\n", c->color ? c->color : "(не указано)");
+        fprintf(f, "Техосмотр             : %s\n", c->technical_inspection ? c->technical_inspection : "(не указано)");
+        fprintf(f, "Тип кузова            : %s\n", c->body_type ? c->body_type : "(не указано)");
+        fprintf(f, "Пробег                : %s\n", c->mileage ? c->mileage : "(не указано)");
+        fprintf(f, "Коробка передач       : %s\n", c->gear_box ? c->gear_box : "(не указано)");
+        fprintf(f, "Тип топлива           : %s\n", c->fuel_type ? c->fuel_type : "(не указано)");
+        fprintf(f, "Владелец              : %s\n", c->owner ? c->owner : "(не указано)");
+        fprintf(f, "========================================\n\n");
     }
 
     fclose(f);
-    printf("Saved %d cars to %s\n", car_count, filename);
+    printf("Сохранено %d машин в файл %s\n", car_count, filename);
 }
 
 int loadFromFile(const char *filename){
